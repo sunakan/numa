@@ -1,0 +1,204 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters: 
+  ProjectName: 
+    Type: String
+    Description: プロジェクト名
+  Environment: 
+    Type: String
+    Default: dev
+    AllowedValues: 
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  ##############################################################################
+  # VPC
+  ##############################################################################
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  ##############################################################################
+  # InternetGatewayとPublicRouteTableの用意(Attach含む)
+  ##############################################################################
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  InternetGatewayAttachment: 
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC 
+  RouteTableForPublicSubnets:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-public-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RoutingToInternet:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+      RouteTableId: !Ref RouteTableForPublicSubnets
+  ##############################################################################
+  # Public subnet
+  # VPC SubnetとPublic用Route tableの関連付け
+  ##############################################################################
+  PublicSubnetA: 
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref VPC 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-public-a-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RouteTableAssociationForPublicSubnetA: 
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      SubnetId: !Ref PublicSubnetA 
+      RouteTableId: !Ref RouteTableForPublicSubnets
+  PublicSubnetC: 
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: ap-northeast-1c
+      CidrBlock: 10.0.1.0/24
+      VpcId: !Ref VPC 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-public-c-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RouteTableAssociationForPublicSubnetC: 
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      SubnetId: !Ref PublicSubnetC 
+      RouteTableId: !Ref RouteTableForPublicSubnets
+  PublicSubnetD: 
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: ap-northeast-1d
+      CidrBlock: 10.0.2.0/24
+      VpcId: !Ref VPC 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-public-d-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RouteTableAssociationForPublicSubnetD: 
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      SubnetId: !Ref PublicSubnetD 
+      RouteTableId: !Ref RouteTableForPublicSubnets
+  ##############################################################################
+  # routetable for intra subnets
+  ##############################################################################
+  RouteTableForIntraSubnets:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-intra-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  ##############################################################################
+  # Intra subnet
+  # VPC SubnetとIntra用Routetableの関連付け
+  ##############################################################################
+  IntraSubnetA: 
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.10.0/24
+      VpcId: !Ref VPC 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-intra-a-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RouteTableAssociationForIntraSubnetA: 
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      SubnetId: !Ref IntraSubnetA 
+      RouteTableId: !Ref RouteTableForIntraSubnets
+  IntraSubnetC: 
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: ap-northeast-1c
+      CidrBlock: 10.0.11.0/24
+      VpcId: !Ref VPC 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-intra-c-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RouteTableAssociationForIntraSubnetC: 
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      SubnetId: !Ref IntraSubnetC 
+      RouteTableId: !Ref RouteTableForIntraSubnets
+  IntraSubnetD: 
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: ap-northeast-1d
+      CidrBlock: 10.0.12.0/24
+      VpcId: !Ref VPC 
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-intra-d-${Environment}
+        - Key: Environment
+          Value: ${Environment}
+  RouteTableAssociationForIntraSubnetD: 
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      SubnetId: !Ref IntraSubnetD 
+      RouteTableId: !Ref RouteTableForIntraSubnets
+
+
+################################################################################
+# Output
+################################################################################
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-vpc-id
+  DefaultSecurityGroupId:
+    Value: !GetAtt VPC.DefaultSecurityGroup
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-default-security-group-id
+  PublicSubnetAId:
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-public-subnet-a-id
+  PublicSubnetCId:
+    Value: !Ref PublicSubnetC
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-public-subnet-c-id
+  PublicSubnetDId:
+    Value: !Ref PublicSubnetD
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-public-subnet-d-id
