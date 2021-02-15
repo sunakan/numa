@@ -1,0 +1,6 @@
+= S3バケットの作成
+
+----
+$ make create-s3-bucket
+$ make update-public-access-block
+----
