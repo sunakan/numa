@@ -1,13 +1,13 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Parameters: 
-  ProjectName: 
+Parameters:
+  ProjectName:
     Type: String
     Description: プロジェクト名
-  Environment: 
+  Environment:
     Type: String
     Default: dev
-    AllowedValues: 
+    AllowedValues:
       - dev
       - stg
       - prd
@@ -35,28 +35,28 @@ Resources:
   IGW:
     Type: AWS::EC2::InternetGateway
     Properties:
-      Tags: 
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-${Environment}
         - Key: Environment
           Value: ${Environment}
-  InternetGatewayAttachment: 
+  InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
-    Properties: 
+    Properties:
       InternetGatewayId: !Ref IGW
-      VpcId: !Ref VPC 
+      VpcId: !Ref VPC
   RouteTableForPublicSubnets:
     Type: AWS::EC2::RouteTable
-    Properties: 
+    Properties:
       VpcId: !Ref VPC
-      Tags: 
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-public-${Environment}
         - Key: Environment
           Value: ${Environment}
   RoutingToInternet:
     Type: AWS::EC2::Route
-    Properties: 
+    Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref IGW
       RouteTableId: !Ref RouteTableForPublicSubnets
@@ -64,62 +64,62 @@ Resources:
   # Public subnet
   # VPC SubnetとPublic用Route tableの関連付け
   ##############################################################################
-  PublicSubnetA: 
+  PublicSubnetA:
     Type: AWS::EC2::Subnet
-    Properties: 
+    Properties:
       AvailabilityZone: ap-northeast-1a
       CidrBlock: 10.0.0.0/24
-      VpcId: !Ref VPC 
-      Tags: 
+      VpcId: !Ref VPC
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-public-a-${Environment}
         - Key: Environment
           Value: ${Environment}
-  RouteTableAssociationForPublicSubnetA: 
+  RouteTableAssociationForPublicSubnetA:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      SubnetId: !Ref PublicSubnetA 
+    Properties:
+      SubnetId: !Ref PublicSubnetA
       RouteTableId: !Ref RouteTableForPublicSubnets
-  PublicSubnetC: 
+  PublicSubnetC:
     Type: AWS::EC2::Subnet
-    Properties: 
+    Properties:
       AvailabilityZone: ap-northeast-1c
       CidrBlock: 10.0.1.0/24
-      VpcId: !Ref VPC 
-      Tags: 
+      VpcId: !Ref VPC
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-public-c-${Environment}
         - Key: Environment
           Value: ${Environment}
-  RouteTableAssociationForPublicSubnetC: 
+  RouteTableAssociationForPublicSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      SubnetId: !Ref PublicSubnetC 
+    Properties:
+      SubnetId: !Ref PublicSubnetC
       RouteTableId: !Ref RouteTableForPublicSubnets
-  PublicSubnetD: 
+  PublicSubnetD:
     Type: AWS::EC2::Subnet
-    Properties: 
+    Properties:
       AvailabilityZone: ap-northeast-1d
       CidrBlock: 10.0.2.0/24
-      VpcId: !Ref VPC 
-      Tags: 
+      VpcId: !Ref VPC
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-public-d-${Environment}
         - Key: Environment
           Value: ${Environment}
-  RouteTableAssociationForPublicSubnetD: 
+  RouteTableAssociationForPublicSubnetD:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      SubnetId: !Ref PublicSubnetD 
+    Properties:
+      SubnetId: !Ref PublicSubnetD
       RouteTableId: !Ref RouteTableForPublicSubnets
   ##############################################################################
   # routetable for intra subnets
   ##############################################################################
   RouteTableForIntraSubnets:
     Type: AWS::EC2::RouteTable
-    Properties: 
+    Properties:
       VpcId: !Ref VPC
-      Tags: 
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-${Environment}
         - Key: Environment
@@ -128,54 +128,122 @@ Resources:
   # Intra subnet
   # VPC SubnetとIntra用Routetableの関連付け
   ##############################################################################
-  IntraSubnetA: 
+  IntraSubnetA:
     Type: AWS::EC2::Subnet
-    Properties: 
+    Properties:
       AvailabilityZone: ap-northeast-1a
       CidrBlock: 10.0.10.0/24
-      VpcId: !Ref VPC 
-      Tags: 
+      VpcId: !Ref VPC
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-a-${Environment}
         - Key: Environment
           Value: ${Environment}
-  RouteTableAssociationForIntraSubnetA: 
+  RouteTableAssociationForIntraSubnetA:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      SubnetId: !Ref IntraSubnetA 
+    Properties:
+      SubnetId: !Ref IntraSubnetA
       RouteTableId: !Ref RouteTableForIntraSubnets
-  IntraSubnetC: 
+  IntraSubnetC:
     Type: AWS::EC2::Subnet
-    Properties: 
+    Properties:
       AvailabilityZone: ap-northeast-1c
       CidrBlock: 10.0.11.0/24
-      VpcId: !Ref VPC 
-      Tags: 
+      VpcId: !Ref VPC
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-c-${Environment}
         - Key: Environment
           Value: ${Environment}
-  RouteTableAssociationForIntraSubnetC: 
+  RouteTableAssociationForIntraSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      SubnetId: !Ref IntraSubnetC 
+    Properties:
+      SubnetId: !Ref IntraSubnetC
       RouteTableId: !Ref RouteTableForIntraSubnets
-  IntraSubnetD: 
+  IntraSubnetD:
     Type: AWS::EC2::Subnet
-    Properties: 
+    Properties:
       AvailabilityZone: ap-northeast-1d
       CidrBlock: 10.0.12.0/24
-      VpcId: !Ref VPC 
-      Tags: 
+      VpcId: !Ref VPC
+      Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-d-${Environment}
         - Key: Environment
           Value: ${Environment}
-  RouteTableAssociationForIntraSubnetD: 
+  RouteTableAssociationForIntraSubnetD:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties: 
-      SubnetId: !Ref IntraSubnetD 
+    Properties:
+      SubnetId: !Ref IntraSubnetD
       RouteTableId: !Ref RouteTableForIntraSubnets
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForVpcId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/vpc-id
+      Type: String
+      Value: !Ref VPC
+      Description: 'vpc id'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForPublicSubnetAId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/public-subnet-a-id
+      Type: String
+      Value: !Ref PublicSubnetA
+      Description: 'one of public subnets'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForPublicSubnetCId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/public-subnet-c-id
+      Type: String
+      Value: !Ref PublicSubnetC
+      Description: 'one of public subnets'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForPublicSubnetDId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/public-subnet-d-id
+      Type: String
+      Value: !Ref PublicSubnetD
+      Description: 'one of public subnets'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForIntraSubnetA:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/intra-subnet-a-id
+      Type: String
+      Value: !Ref IntraSubnetA
+      Description: 'one of intra subnets'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForIntraSubnetC:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/intra-subnet-c-id
+      Type: String
+      Value: !Ref IntraSubnetC
+      Description: 'one of intra subnets'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForIntraSubnetD:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/intra-subnet-d-id
+      Type: String
+      Value: !Ref IntraSubnetD
+      Description: 'one of intra subnets'
+      Tags:
+        Environment: !Sub ${Environment}
+
+
 
 
 ################################################################################
