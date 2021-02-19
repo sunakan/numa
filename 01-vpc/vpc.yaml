@@ -15,7 +15,7 @@ Parameters:
 
 Resources:
   ##############################################################################
-  # VPC
+  # VPC(Remove default security group Ingress/Egress)
   ##############################################################################
   VPC:
     Type: AWS::EC2::VPC
@@ -28,7 +28,25 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
+  VPCDefaultSecurityGroupEgressRemove:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt VPC.DefaultSecurityGroup
+      IpProtocol: icmp
+      FromPort: 0
+      ToPort: 0
+      CidrIp: 127.0.0.1/32
+      Description: Effectively no access
+  VPCDefaultSecurityGroupIngressRemove:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt VPC.DefaultSecurityGroup
+      IpProtocol: icmp
+      FromPort: 0
+      ToPort: 0
+      CidrIp: 127.0.0.1/32
+      Description: Effectively no access
   ##############################################################################
   # InternetGatewayとPublicRouteTableの用意(Attach含む)
   ##############################################################################
@@ -39,7 +57,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -53,7 +71,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-public-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RoutingToInternet:
     Type: AWS::EC2::Route
     Properties:
@@ -74,7 +92,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-public-a-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RouteTableAssociationForPublicSubnetA:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -90,7 +108,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-public-c-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RouteTableAssociationForPublicSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -106,7 +124,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-public-d-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RouteTableAssociationForPublicSubnetD:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -123,7 +141,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   ##############################################################################
   # Intra subnet
   # VPC SubnetとIntra用Routetableの関連付け
@@ -138,7 +156,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-a-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RouteTableAssociationForIntraSubnetA:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -154,7 +172,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-c-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RouteTableAssociationForIntraSubnetC:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -170,7 +188,7 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-intra-d-${Environment}
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub ${Environment}
   RouteTableAssociationForIntraSubnetD:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
