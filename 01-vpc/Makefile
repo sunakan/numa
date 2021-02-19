@@ -9,12 +9,12 @@ STACK_BASE_NAME := $(PROJECT_NAME)-vpc
 ################################################################################
 # $(1): 環境(dev,stg,prd)
 define create-stack
-  aws cloudformation create-stack --stack-name $(STACK_BASE_NAME)-$(1) --template-body file://./vpc.yaml --parameters ParameterKey=ProjectName,ParameterValue=$(PROJECT_NAME) ParameterKey=Environment,ParameterValue=$(1)
+  aws cloudformation create-stack --stack-name $(STACK_BASE_NAME)-$(1) --template-body file://./main.yaml --parameters ParameterKey=ProjectName,ParameterValue=$(PROJECT_NAME) ParameterKey=Environment,ParameterValue=$(1)
 endef
 
 # $(1): 環境(dev,stg,prd)
 define update-stack
-  aws cloudformation update-stack --stack-name $(STACK_BASE_NAME)-$(1) --template-body file://./vpc.yaml --parameters ParameterKey=ProjectName,ParameterValue=$(PROJECT_NAME) ParameterKey=Environment,ParameterValue=$(1)
+  aws cloudformation update-stack --stack-name $(STACK_BASE_NAME)-$(1) --template-body file://./main.yaml --parameters ParameterKey=ProjectName,ParameterValue=$(PROJECT_NAME) ParameterKey=Environment,ParameterValue=$(1)
 endef
 
 
