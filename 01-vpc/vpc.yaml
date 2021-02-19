@@ -195,6 +195,52 @@ Resources:
       SubnetId: !Ref IntraSubnetD
       RouteTableId: !Ref RouteTableForIntraSubnets
   ##############################################################################
+  # SecurityGroup for public subnets
+  ##############################################################################
+  SecurityGroupForPublicSubnets:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub allow-from-internet-for-${ProjectName}-public-subnets-${Environment}
+      GroupDescription: 'ex:IGW--sg--ALB,IGW--sg--EC2'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort : 80
+              ToPort : 80
+              CidrIp: 0.0.0.0/0
+            - IpProtocol: tcp
+              FromPort : 443
+              ToPort : 443
+              CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub allow-from-internet-for-${ProjectName}-public-subnets-${Environment}
+        - Key: Environment
+          Value: !Sub ${Environment}
+  ##############################################################################
+  # SecurityGroup for public subnets
+  ##############################################################################
+  SecurityGroupForIntraSubnets:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub allow-from-internet-for-${ProjectName}-intra-subnets-${Environment}
+      GroupDescription: 'ex:ALB--sg--FARGATE'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort : 80
+              ToPort : 80
+              CidrIp: 0.0.0.0/0
+            - IpProtocol: tcp
+              FromPort : 443
+              ToPort : 443
+              CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub allow-from-internet-for-${ProjectName}-intra-subnets-${Environment}
+        - Key: Environment
+          Value: !Sub ${Environment}
+  ##############################################################################
   # SSM Parameter Store
   ##############################################################################
   ParameterStoreForVpcId:
@@ -260,31 +306,21 @@ Resources:
       Description: 'one of intra subnets'
       Tags:
         Environment: !Sub ${Environment}
-
-
-
-
-################################################################################
-# Output
-################################################################################
-Outputs:
-  VpcId:
-    Value: !Ref VPC
-    Export:
-      Name: !Sub ${ProjectName}-${Environment}-vpc-id
-  DefaultSecurityGroupId:
-    Value: !GetAtt VPC.DefaultSecurityGroup
-    Export:
-      Name: !Sub ${ProjectName}-${Environment}-default-security-group-id
-  PublicSubnetAId:
-    Value: !Ref PublicSubnetA
-    Export:
-      Name: !Sub ${ProjectName}-${Environment}-public-subnet-a-id
-  PublicSubnetCId:
-    Value: !Ref PublicSubnetC
-    Export:
-      Name: !Sub ${ProjectName}-${Environment}-public-subnet-c-id
-  PublicSubnetDId:
-    Value: !Ref PublicSubnetD
-    Export:
-      Name: !Sub ${ProjectName}-${Environment}-public-subnet-d-id
+  ParameterStoreForSecurityGroupIdForPublicSubnets:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/security-group-id-for-public-subnets
+      Type: String
+      Value: !Ref SecurityGroupForPublicSubnets
+      Description: 'ex:IGW--sg--ALB,IGW--sg--EC2'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForSecurityGroupIdForIntraSubnets:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/security-group-id-for-intra-subnets
+      Type: String
+      Value: !Ref SecurityGroupForIntraSubnets
+      Description: 'ex:ALB--sg--FARGATE'
+      Tags:
+        Environment: !Sub ${Environment}

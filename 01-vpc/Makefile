@@ -38,3 +38,9 @@ delete: # CFnのスタック削除(全環境分)
 	aws cloudformation delete-stack --stack-name $(STACK_BASE_NAME)-dev
 #	aws cloudformation delete-stack --stack-name $(STCK_BASE_NAME)-stg
 #	aws cloudformation delete-stack --stack-name $(STCK_BASE_NAME)-prd
+
+.PHONY: list-parameter-store
+list-parameter-store: # CFnで作ったParameterStore一覧
+	aws ssm get-parameters-by-path --path "/$(PROJECT_NAME)/dev/" | jq -rc '.Parameters[] | {name: .Name, value: .Value}'
+	aws ssm get-parameters-by-path --path "/$(PROJECT_NAME)/stg/" | jq -rc '.Parameters[] | {name: .Name, value: .Value}'
+	aws ssm get-parameters-by-path --path "/$(PROJECT_NAME)/prd/" | jq -rc '.Parameters[] | {name: .Name, value: .Value}'
