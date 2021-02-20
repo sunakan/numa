@@ -1,0 +1,69 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  ##############################################################################
+  # ALB
+  ##############################################################################
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub alb-${Environment}
+      Scheme: internet-facing
+      Subnets:
+        - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-a-id:1}}"
+        - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-c-id:1}}"
+        - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-d-id:1}}"
+      Type: application
+      SecurityGroups:
+        - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/security-group-id-for-public-subnets:1}}"
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}
+        - Key: Environment
+          Value: !Sub ${Environment}
+  HTTPListner:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: text/plain
+            StatusCode: 503
+            MessageBody: 'Nothing'
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForALB:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/alb-arn
+      Type: String
+      Value: !Ref ALB
+      Description: 'alb id'
+      Tags:
+        Environment: !Sub ${Environment}
+  ParameterStoreForHTTPListener:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/alb-http-listener-arn
+      Type: String
+      Value: !Ref ALB
+      Description: 'http listener id'
+      Tags:
+        Environment: !Sub ${Environment}
