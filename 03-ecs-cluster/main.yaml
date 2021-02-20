@@ -35,9 +35,9 @@ Resources:
   ParameterStoreForECSCluster:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${ProjectName}/${Environment}/ecs-cluster-name
+      Name: !Sub /${ProjectName}/${Environment}/ecs-cluster-arn
       Type: String
-      Value: !Ref ECSCluster
-      Description: 'ecs cluster name'
+      Value: !GetAtt ECSCluster.Arn
+      Description: 'ecs cluster arn'
       Tags:
         Environment: !Sub ${Environment}
