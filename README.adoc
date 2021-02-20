@@ -26,3 +26,13 @@ $ tree -L 1 ./
 ├── README.adoc        # このドキュメント
 └── app                # アプリ本体
 ----
+
+=== ブランチ戦略
+
+* Git Flow
+** developブランチが基本
+*** featureブランチを切っていく
+** releaseブランチは3つ
+*** release_dev
+*** release_stg
+*** release_prd
