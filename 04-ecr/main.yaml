@@ -37,3 +37,4 @@ Resources:
       Description: 'ecr repository arn'
       Tags:
         Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
