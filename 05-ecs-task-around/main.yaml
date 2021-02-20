@@ -80,23 +80,23 @@ Resources:
       Tags:
         Environment: !Ref Environment
         ProjectName: !Ref ProjectName
-  ParameterStoreForECSTaskExecutionRole:
+  ParameterStoreForECSTaskExecutionRoleArn:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${ProjectName}/${Environment}/ecs-task-execution-role
+      Name: !Sub /${ProjectName}/${Environment}/ecs-task-execution-role-arn
       Type: String
-      Value: !Ref ECSTaskExecutionRole
-      Description: 'ecs task execution role'
+      Value: !GetAtt ECSTaskExecutionRole.Arn
+      Description: 'ecs task execution role arn'
       Tags:
         Environment: !Ref Environment
         ProjectName: !Ref ProjectName
-  ParameterStoreForECSTaskRole:
+  ParameterStoreForECSTaskRoleArn:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${ProjectName}/${Environment}/ecs-task-role
+      Name: !Sub /${ProjectName}/${Environment}/ecs-task-role-arn
       Type: String
-      Value: !Ref ECSTaskRole
-      Description: 'ecs task role'
+      Value: !GetAtt ECSTaskRole.Arn
+      Description: 'ecs task role arn'
       Tags:
         Environment: !Ref Environment
         ProjectName: !Ref ProjectName
