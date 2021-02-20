@@ -1,0 +1,73 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: 80
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 6
+      HealthyThresholdCount: 3
+      Name: !Ref ProjectName
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 3
+      TargetType: ip
+      VpcId: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/vpc-id:1}}"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+  ListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+          Order: 1
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - !Sub "/${ProjectName}/*"
+      ListenerArn: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/alb-http-listener-arn:1}}"
+      Priority: 1
+
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForTargetGroup:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/alb-target-group-arn
+      Type: String
+      Value: !Ref TargetGroup
+      Description: 'TargetGroup arn'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+  ParameterStoreForTargetGroup:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/alb-listener-rule-arn
+      Type: String
+      Value: !Ref ListenerRule
+      Description: 'listener rule arn'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
