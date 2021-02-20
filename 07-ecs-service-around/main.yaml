@@ -61,7 +61,7 @@ Resources:
       Tags:
         Environment: !Ref Environment
         ProjectName: !Ref ProjectName
-  ParameterStoreForTargetGroup:
+  ParameterStoreForListenerRule:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub /${ProjectName}/${Environment}/alb-listener-rule-arn
