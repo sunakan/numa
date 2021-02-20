@@ -56,7 +56,7 @@ Resources:
   ParameterStoreForTaskDefinition:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${ProjectName}/${Environment}/task-definition-arn
+      Name: !Sub /${ProjectName}/${Environment}/ecs-task-definition-arn
       Type: String
       Value: !Ref ECSTaskDefinition
       Description: 'Task definition arn'
