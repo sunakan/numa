@@ -1,0 +1,102 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  ##############################################################################
+  # LogGroup
+  ##############################################################################
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${ProjectName}/${Environment}
+      RetentionInDays: 14
+  ##############################################################################
+  # ECS Container Agent(タスクを実行するAgent)に付与するIAM Role
+  ##############################################################################
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      RoleName: !Sub ${ProjectName}-task-execution-role-${AWS::Region}-${Environment}
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+  ##############################################################################
+  # Taskに付与するIAM Role
+  ##############################################################################
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      RoleName: !Sub ${ProjectName}-task-role-${AWS::Region}-${Environment}
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForLogGroup:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecs-task-log-group
+      Type: String
+      Value: !Ref LogGroup
+      Description: 'log group id'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+  ParameterStoreForECSTaskExecutionRole:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecs-task-execution-role
+      Type: String
+      Value: !Ref ECSTaskExecutionRole
+      Description: 'ecs task execution role'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+  ParameterStoreForECSTaskRole:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecs-task-role
+      Type: String
+      Value: !Ref ECSTaskRole
+      Description: 'ecs task role'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
