@@ -63,7 +63,7 @@ Resources:
     Properties:
       Name: !Sub /${ProjectName}/${Environment}/alb-http-listener-arn
       Type: String
-      Value: !Ref ALB
+      Value: !Ref HTTPListner
       Description: 'http listener id'
       Tags:
         Environment: !Sub ${Environment}
