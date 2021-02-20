@@ -1,0 +1,39 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  ##############################################################################
+  # ECR
+  ##############################################################################
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ProjectName
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForECR:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecr-repository-arn
+      Type: String
+      Value: !GetAtt ECRRepository.Arn
+      Description: 'ecr repository arn'
+      Tags:
+        Environment: !Ref Environment
