@@ -1,0 +1,65 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+  ContainerImageTag:
+    Type: String
+    Description: タスク定義で使うContainer imageのtag
+
+Resources:
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Ref ProjectName
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-execution-role-arn:1}}"
+      TaskRoleArn: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-role-arn:1}}"
+      ContainerDefinitions:
+        - Name: app
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}:${ContainerImageTag}
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+              Protocol: tcp
+          Environment:
+            - Name: TZ
+              Value: Asia/Tokyo
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-group: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-log-group:1}}"
+              awslogs-stream-prefix: !Sub ${ProjectName}-app
+          Essential: true
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForTaskDefinition:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/task-definition-arn
+      Type: String
+      Value: !Ref ECSTaskDefinition
+      Description: 'Task definition arn'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
