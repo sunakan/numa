@@ -48,23 +48,13 @@ Resources:
   ##############################################################################
   # SSM Parameter Store
   ##############################################################################
-#  ParameterStoreForTargetGroup:
-#    Type: AWS::SSM::Parameter
-#    Properties:
-#      Name: !Sub /${ProjectName}/${Environment}/alb-target-group-arn
-#      Type: String
-#      Value: !Ref TargetGroup
-#      Description: 'TargetGroup arn'
-#      Tags:
-#        Environment: !Ref Environment
-#        ProjectName: !Ref ProjectName
-#  ParameterStoreForTargetGroup:
-#    Type: AWS::SSM::Parameter
-#    Properties:
-#      Name: !Sub /${ProjectName}/${Environment}/alb-listener-rule-arn
-#      Type: String
-#      Value: !Ref ListenerRule
-#      Description: 'listener rule arn'
-#      Tags:
-#        Environment: !Ref Environment
-#        ProjectName: !Ref ProjectName
+  ParameterStoreForTargetGroup:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecs-service-arn
+      Type: String
+      Value: !Ref ECSService
+      Description: 'ecs service arn'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
