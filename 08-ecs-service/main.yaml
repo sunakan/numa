@@ -1,0 +1,70 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-cluster-arn:1}}"
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: app
+          ContainerPort: 80
+          TargetGroupArn: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/alb-target-group-arn:1}}"
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED # PublicSubnetを利用する場合はENABLEDにする必要があります。
+          SecurityGroups:
+            - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/security-group-id-for-public-subnets:1}}"
+          Subnets:
+            - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-a-id:1}}"
+            - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-c-id:1}}"
+            - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-d-id:1}}"
+      ServiceName: !Ref ProjectName
+      TaskDefinition: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-definition-arn:1}}"
+      PlatformVersion: '1.4'
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+#  ParameterStoreForTargetGroup:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !Sub /${ProjectName}/${Environment}/alb-target-group-arn
+#      Type: String
+#      Value: !Ref TargetGroup
+#      Description: 'TargetGroup arn'
+#      Tags:
+#        Environment: !Ref Environment
+#        ProjectName: !Ref ProjectName
+#  ParameterStoreForTargetGroup:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !Sub /${ProjectName}/${Environment}/alb-listener-rule-arn
+#      Type: String
+#      Value: !Ref ListenerRule
+#      Description: 'listener rule arn'
+#      Tags:
+#        Environment: !Ref Environment
+#        ProjectName: !Ref ProjectName
