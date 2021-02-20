@@ -1,0 +1,43 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+Mappings:
+  EnvironmentFullName:
+    dev:
+      value: development
+    stg:
+      value: staging
+    prd:
+      value: production
+
+Resources:
+  ##############################################################################
+  # ECS Cluster
+  ##############################################################################
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !FindInMap [EnvironmentFullName, !Ref Environment, value]
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForECSCluster:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecs-cluster-name
+      Type: String
+      Value: !Ref ECSCluster
+      Description: 'ecs cluster name'
+      Tags:
+        Environment: !Sub ${Environment}
