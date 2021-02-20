@@ -1,1 +1,28 @@
 = 沼
+
+== 開発
+
+.ツール
+[cols="1,3", options="header"]
+|===
+|ツール名 |用途
+|Makefile|タスクランナー
+|Docker|開発
+|direnv|環境変数をディレクトリ毎に定義
+|===
+
+.ディレクトリ構造
+----
+$ tree -L 1 ./
+./
+├── 00-s3              # 何かと必要になるS3バケット
+├── 01-vpc             # VPC
+├── 02-alb             # ALB(TargetGroupはなし)
+├── 03-ecs-cluster     # ECSのクラスタのみ
+├── 04-ecr             # ECR
+├── 05-ecs-task-around # ECSタスクで使うIAMロールやLogGroup等
+├── Dockerfile         #
+├── Makefile           #
+├── README.adoc        # このドキュメント
+└── app                # アプリ本体
+----
