@@ -4,8 +4,8 @@
 PROJECT_ENV             := ${PROJECT_ENV}
 PROJECT_NAME            := ${PROJECT_NAME}
 STACK_NAME              := $(PROJECT_NAME)-ecs-task-$(PROJECT_ENV)
-CONTAINER_IMAGE_TAG     := c482778----20210220T2258_0900
-NGINX_SIDECAR_IMAGE_TAG := c1f12fd----20210221T1040_0900
+CONTAINER_IMAGE_TAG     := 9720de9----20210222T0737_0900
+NGINX_SIDECAR_IMAGE_TAG := 9720de9----20210222T0738_0900
 
 ################################################################################
 # マクロ
