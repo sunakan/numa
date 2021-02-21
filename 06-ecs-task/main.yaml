@@ -15,6 +15,9 @@ Parameters:
   ContainerImageTag:
     Type: String
     Description: タスク定義で使うContainer imageのtag
+  NginxSidecarImageTag:
+    Type: String
+    Description: タスク定義で使うNginx sidecar container imageのtag
 
 Resources:
   ECSTaskDefinition:
@@ -32,8 +35,8 @@ Resources:
         - Name: app
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}:${ContainerImageTag}
           PortMappings:
-            - ContainerPort: 80
-              HostPort: 80
+            - ContainerPort: 8080
+              HostPort: 8080
               Protocol: tcp
           Environment:
             - Name: TZ
@@ -44,6 +47,30 @@ Resources:
               awslogs-region: !Ref 'AWS::Region'
               awslogs-group: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-log-group:1}}"
               awslogs-stream-prefix: !Sub ${ProjectName}-app
+          Essential: true
+        - Name: nginx-sidecar
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-nginx-sidecar:${NginxSidecarImageTag}
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+              Protocol: tcp
+          Environment:
+            - Name: TZ
+              Value: Asia/Tokyo
+            - Name: NGINX_LISTEN_PORT
+              Value: 80
+            - Name: NGINX_PROXY_HOST
+              Value: localhost # FARGATEはlinksは使えずlocalhostでportでアクセス
+            - Name: NGINX_PROXY_PORT
+              Value: 8080
+            - Name: NGINX_REWRITE
+              Value: '^/numa/(.*)' # ここももしかしたらparameter store
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-group: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-log-group:1}}"
+              awslogs-stream-prefix: !Sub ${ProjectName}-nginx-sidecar
           Essential: true
       Tags:
         - Key: ProjectName
