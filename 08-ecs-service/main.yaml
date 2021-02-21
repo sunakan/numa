@@ -24,7 +24,7 @@ Resources:
       DesiredCount: 1
       LaunchType: FARGATE
       LoadBalancers:
-        - ContainerName: app
+        - ContainerName: nginx-sidecar
           ContainerPort: 80
           TargetGroupArn: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/alb-target-group-arn:1}}"
       NetworkConfiguration:
@@ -37,8 +37,8 @@ Resources:
             - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-c-id:1}}"
             - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/public-subnet-d-id:1}}"
       ServiceName: !Ref ProjectName
-      TaskDefinition: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-definition-arn:1}}"
-      PlatformVersion: '1.4'
+      TaskDefinition: !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecs-task-definition-arn:4}}"
+      PlatformVersion: '1.4.0'
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
