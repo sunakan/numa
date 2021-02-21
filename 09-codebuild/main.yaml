@@ -4,14 +4,6 @@ Parameters:
   ProjectName:
     Type: String
     Description: プロジェクト名
-  Environment:
-    Type: String
-    Default: dev
-    AllowedValues:
-      - dev
-      - stg
-      - prd
-    Description: 環境(development/staging/production)
 
 Resources:
   ##############################################################################
@@ -20,7 +12,7 @@ Resources:
   LogGroupForCodeBuild:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /codebuild/${ProjectName}/${Environment}
+      LogGroupName: !Sub /codebuild/${ProjectName}
       RetentionInDays: 30
   ##############################################################################
   # CodeBuildがBuildする時の付与されるIAM Role
@@ -40,8 +32,6 @@ Resources:
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
   ##############################################################################
   # インラインポリシー
   # 人間用でもないので、このロールだけに付与すると考える
@@ -56,8 +46,8 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Resource: 
-              - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecr-repository-arn:1}}"
-              - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecr-repository-for-nginx-sidecar-arn:1}}"
+              - !Sub "{{resolve:ssm:/${ProjectName}/shared/ecr-repository-arn:1}}"
+              - !Sub "{{resolve:ssm:/${ProjectName}/shared/ecr-repository-for-nginx-sidecar-arn:1}}"
             Effect: Allow
             Action:
               - 'ecr:BatchCheckLayerAvailability'
@@ -114,8 +104,6 @@ Resources:
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
       TimeoutInMinutes: 10
       QueuedTimeoutInMinutes: 5
       LogsConfig:
@@ -144,20 +132,18 @@ Resources:
   ParameterStoreForLogGroupForCodeBuild:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${ProjectName}/${Environment}/codebuild-log-group
+      Name: !Sub /${ProjectName}/shared/codebuild-log-group
       Type: String
       Value: !Ref LogGroupForCodeBuild
       Description: 'log group for codebuild'
       Tags:
-        Environment: !Ref Environment
         ProjectName: !Ref ProjectName
   ParameterStoreForIAMRoleForCodeBuild:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${ProjectName}/${Environment}/codebuild-iam-role-arn
+      Name: !Sub /${ProjectName}/shared/codebuild-iam-role-arn
       Type: String
       Value: !GetAtt IAMRoleForCodeBuild.Arn
       Description: 'iam role for codebuild'
       Tags:
-        Environment: !Ref Environment
         ProjectName: !Ref ProjectName

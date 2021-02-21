@@ -1,9 +1,8 @@
 ################################################################################
 # 変数
 ################################################################################
-PROJECT_ENV         := ${PROJECT_ENV}
-PROJECT_NAME        := ${PROJECT_NAME}
-STACK_NAME          := $(PROJECT_NAME)-codebuild-$(PROJECT_ENV)
+PROJECT_NAME := ${PROJECT_NAME}
+STACK_NAME   := $(PROJECT_NAME)-codebuild-shared
 
 ################################################################################
 # マクロ
@@ -15,8 +14,14 @@ aws cloudformation $(1)-stack \
   --template-body file://./main.yaml \
   --parameters \
     ParameterKey=ProjectName,ParameterValue=$(PROJECT_NAME) \
-    ParameterKey=Environment,ParameterValue=$(PROJECT_ENV) \
   --capabilities CAPABILITY_IAM
+endef
+
+# $(1): shared or $(PROJECT_ENV)
+define parameters-by-path
+aws ssm get-parameters-by-path \
+  --path "/$(PROJECT_NAME)/$(1)/" \
+| jq -rc '.Parameters | sort_by(.Name) | .[] | {name: .Name, version: .Version, value: .Value}'
 endef
 
 ################################################################################
@@ -36,7 +41,7 @@ delete: ## CFnのスタック削除
 
 .PHONY: list-parameter-store
 list-parameter-store: ## CFnで作ったParameterStore一覧
-	aws ssm get-parameters-by-path --path "/$(PROJECT_NAME)/$(PROJECT_ENV)/" | jq -rc '.Parameters | sort_by(.Name) | .[] | {name: .Name, version: .Version, value: .Value}'
+	$(call parameters-by-path,shared)
 
 .PHONY: describe
 describe: ## CFnで作ったStackの様子
