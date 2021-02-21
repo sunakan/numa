@@ -2,7 +2,7 @@
 # 変数
 ################################################################################
 PROJECT_NAME    := ${PROJECT_NAME}
-REPOSITORY_NAME := $(PROJECT_NAME)
+REPOSITORY_NAME := $(PROJECT_NAME)-nginx-sidecar
 
 ################################################################################
 # マクロ
@@ -13,11 +13,11 @@ REPOSITORY_NAME := $(PROJECT_NAME)
 ################################################################################
 .PHONY: docker-build
 docker-build:
-	docker build ./ --tag app:latest
+	docker build ./ --tag $(REPOSITORY_NAME):latest
 
-.PHONY: docker-up
-docker-up:
-	docker run --rm -it --publish 80:80 app:latest
+.PHONY: docker-bash
+docker-bash:
+	docker run --rm -it $(REPOSITORY_NAME):latest bash
 
 .PHONY: ci
 ci:
