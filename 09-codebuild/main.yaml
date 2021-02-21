@@ -1,0 +1,164 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ProjectName:
+    Type: String
+    Description: プロジェクト名
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+    Description: 環境(development/staging/production)
+
+Resources:
+  ##############################################################################
+  # LogGroup
+  ##############################################################################
+  LogGroupForCodeBuild:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /codebuild/${ProjectName}/${Environment}
+      RetentionInDays: 30
+  ##############################################################################
+  # CodeBuildがBuildする時の付与されるIAM Role
+  # 名前を付けてないと{STACK_NAME}-{論理名}-XXXXXXX
+  # ex: numa-codebuild-dev-CodeBuildIAMRole-123ABCD
+  ##############################################################################
+  IAMRoleForCodeBuild:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: codebuild.amazonaws.com
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+  ##############################################################################
+  # インラインポリシー
+  # 人間用でもないので、このロールだけに付与すると考える
+  ##############################################################################
+  IAMPolicyForCodeBuild:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: InlinePolicy
+      Roles:
+        - !Ref IAMRoleForCodeBuild
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Resource: 
+              - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecr-repository-arn:1}}"
+              - !Sub "{{resolve:ssm:/${ProjectName}/${Environment}/ecr-repository-for-nginx-sidecar-arn:1}}"
+            Effect: Allow
+            Action:
+              - 'ecr:GetAuthorizationToken'
+              - 'ecr:BatchCheckLayerAvailability'
+              - 'ecr:GetDownloadUrlForLayer'
+              - 'ecr:GetRepositoryPolicy'
+              - 'ecr:DescribeRepositories'
+              - 'ecr:ListImages'
+              - 'ecr:DescribeImages'
+              - 'ecr:BatchGetImage'
+              - 'ecr:InitiateLayerUpload'
+              - 'ecr:UploadLayerPart'
+              - 'ecr:CompleteLayerUpload'
+              - 'ecr:PutImage'
+          - Resource:
+              - '*'
+            Effect: Allow
+            Action:
+              - 'codebuild:CreateReportGroup'
+              - 'codebuild:CreateReport'
+              - 'codebuild:UpdateReport'
+              - 'codebuild:BatchPutTestCases'
+              - 'codebuild:BatchPutCodeCoverages'
+          - Resource:
+              - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LogGroupForCodeBuild}
+              - !GetAtt LogGroupForCodeBuild.Arn
+            Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+  ##############################################################################
+  # CodeBuild Project
+  ##############################################################################
+  AppBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}
+      BadgeEnabled: True
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Description: !Sub Building stage for ${ProjectName}
+      Environment: # ビルド環境に使用する環境タイプや環境変数などのプロジェクトのビルド環境設定
+        ComputeType: BUILD_GENERAL1_SMALL # SMALL/MEDIUM/LARGE
+        Image: aws/codebuild/standard:5.0
+        Type: LINUX_CONTAINER
+        PrivilegedMode: True
+      ServiceRole: !Ref IAMRoleForCodeBuild
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+      TimeoutInMinutes: 10
+      QueuedTimeoutInMinutes: 5
+      LogsConfig:
+        CloudWatchLogs: 
+          GroupName: !Ref LogGroupForCodeBuild
+          Status: ENABLED
+      Source:
+        Type: GITHUB
+        Auth: 
+          Type: OAUTH
+        Location: 'https://github.com/sunakan/numa.git'
+        GitCloneDepth: 0
+        GitSubmodulesConfig: 
+          FetchSubmodules: True
+        ReportBuildStatus: True
+        BuildSpec: |-
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo Build started on `date`
+                - env | sort
+                - curl 'https://api.ipify.org?format=json'
+                - echo ---------------------------------------
+                - pwd
+                - echo ---------------------------------------
+                - ls -al
+
+  ##############################################################################
+  # SSM Parameter Store
+  ##############################################################################
+  ParameterStoreForLogGroupForCodeBuild:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/codebuild-log-group
+      Type: String
+      Value: !Ref LogGroupForCodeBuild
+      Description: 'log group for codebuild'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+  ParameterStoreForIAMRoleForCodeBuild:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/codebuild-iam-role-arn
+      Type: String
+      Value: !GetAtt IAMRoleForCodeBuild.Arn
+      Description: 'iam role for codebuild'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
