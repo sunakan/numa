@@ -23,7 +23,7 @@ Resources:
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Ref ProjectName
+      Family: !Sub ${ProjectName}-${Environment}
       RequiresCompatibilities:
         - FARGATE
       Cpu: 256
