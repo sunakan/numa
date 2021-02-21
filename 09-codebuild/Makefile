@@ -41,3 +41,7 @@ list-parameter-store: ## CFnで作ったParameterStore一覧
 .PHONY: describe
 describe: ## CFnで作ったStackの様子
 	aws cloudformation describe-stacks --stack-name $(STACK_NAME) | jq -r '.Stacks[0] | {name: .StackName, status: .StackStatus}'
+
+.PHONY: watch
+watch: ## CFnで作ったStackの様子をwatch
+	watch -n 2 make describe
