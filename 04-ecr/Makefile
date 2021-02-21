@@ -22,4 +22,4 @@ delete: # CFnのスタック削除
 
 .PHONY: list-parameter-store
 list-parameter-store: # CFnで作ったParameterStore一覧
-	aws ssm get-parameters-by-path --path "/$(PROJECT_NAME)/$(PROJECT_ENV)/" | jq -rc '.Parameters[] | {name: .Name, value: .Value}'
+	aws ssm get-parameters-by-path --path "/$(PROJECT_NAME)/$(PROJECT_ENV)/" | jq -rc '.Parameters | sort_by(.Name) | .[] | {name: .Name, value: .Value}'

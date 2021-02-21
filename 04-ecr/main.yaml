@@ -24,6 +24,13 @@ Resources:
       Tags:
         - Key: ProjectName
           Value: !Ref ProjectName
+  ECRRepositoryForNginxSidecar:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub ${ProjectName}-nginx-sidecar
+      Tags:
+        - Key: ProjectName
+          Value: !Ref ProjectName
 
   ##############################################################################
   # SSM Parameter Store
@@ -34,6 +41,16 @@ Resources:
       Name: !Sub /${ProjectName}/${Environment}/ecr-repository-arn
       Type: String
       Value: !GetAtt ECRRepository.Arn
+      Description: 'ecr repository arn'
+      Tags:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+  ParameterStoreForNginxSidecarECR:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${ProjectName}/${Environment}/ecr-repository-for-nginx-sidecar-arn
+      Type: String
+      Value: !GetAtt ECRRepositoryForNginxSidecar.Arn
       Description: 'ecr repository arn'
       Tags:
         Environment: !Ref Environment
